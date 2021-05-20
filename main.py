@@ -1,25 +1,39 @@
 from numpy import identity,array,dot,zeros,argmax
 import math
 from casadi import *
+import parser
+import numpy as np
+import matplotlib.pyplot as plt
 
-EPSILON = 10**(-6)
 
-def powellMethod(F,x,h=0.1):
-    
-    def f(lmbd): return F(x + lmbd*v)    # funkcja F dla kierunku ksi
+
+def powellMethod(set_function,x, L,tol, a, b, h=0.1):
+
+    def f(lmbd):
+        x_lamb = x + lmbd*v
+        for i in range(1, len(x_lamb)+1):
+            locals()['x%s' % i] = x_lamb[i-1]   # funkcja F dla kierunku ksi
+        result = eval(set_function)
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = x[i-1]
+        return result
+        
+
 
     n = len(x)                           # ilość zmiennych w funkcji
     ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
-    for j in range(30):                  # max 30 cykli
+    for j in range(L):                  # max 30 cykli
         xOld = x.copy()                  # przypisanie punktu startowego 
-        fOld = F(xOld)
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = xOld[i-1]
+        fOld = eval(set_function)
 
       # Dla i = 1,2,...,n następuje obliczanie lambda minimalizujące 
       # oraz współrzedne nowego punktu x
         for i in range(n):
             v = ksi[i]
-            a,b = Interval4GoldenRatio(f,0.0,h)
-            lmbd,fMin = GoldenRatio(f,a,b)
+            # a,b = Interval4GoldenRatio(f,0.0,h)
+            lmbd,fMin = GoldenRatio(f,a,b, tol)
             fOld = fMin
             x = x + lmbd*v
 
@@ -27,12 +41,12 @@ def powellMethod(F,x,h=0.1):
         v = xOld - x
       # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v 
       # oraz współżedne nowego punktu startowego
-        a,b = Interval4GoldenRatio(f,0.0,h)
-        lmbd,fLast = GoldenRatio(f,a,b)
+        # a,b = Interval4GoldenRatio(f,0.0,h)
+        lmbd,fLast = GoldenRatio(f,a,b, tol)
         x = x + lmbd*v
     
       # sprawdzanie czy jest spełnione kryterium dla minimum
-        if sqrt(dot(x-xOld,x-xOld)/n) < EPSILON: return x,j+1
+        if sqrt(dot(x-xOld,x-xOld)/n) < tol: return x,j+1
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -42,35 +56,35 @@ def powellMethod(F,x,h=0.1):
     print ("Powell did not converge")    
 
 # określenie zakresów dla złotego podziału
-def Interval4GoldenRatio(f,x1,h):
-    c = 1.618033989 
-    f1 = f(x1)
-    x2 = x1 + h; f2 = f(x2)
-  # określenie kierunku spadku
-  # zmiana znaku przy h  jeśli konieczna
-    if f2 > f1:
-        h = -h
-        x2 = x1 + h; f2 = f(x2)
-      # sprawdzenie czy minimum znajduje się między x1 - h  a x1 + h
-        if f2 > f1: return x2,x1 - h 
-  # przeszukanie pętli max 100 cykli
-    for i in range (100):    
-        h = c*h
-        x3 = x2 + h; f3 = f(x3)
-        if f3 > f2: return x1,x3
-        x1 = x2; x2 = x3
-        f1 = f2; f2 = f3
-    print("Bracket did not find a mimimum")
+#def Interval4GoldenRatio(f,xL,h):
+#    c = 1.618033989 
+#    f1 = f(xL)
+#    xR = xL + h; f2 = f(xR)
+#  # określenie kierunku spadku
+#  # zmiana znaku przy h  jeśli konieczna
+#    if f2 > f1:
+#        h = -h
+#        xR = xL + h; f2 = f(xR)
+#      # sprawdzenie czy minimum znajduje się między xL - h  a xL + h
+#        if f2 > f1: return xR,xL - h 
+#  # przeszukanie pętli max 100 cykli
+#    for i in range (100):    
+#        h = c*h
+#        x3 = xR + h; f3 = f(x3)
+#        if f3 > f2: return xL,x3
+#        xL = xR; xR = x3
+#        f1 = f2; f2 = f3
+#    print("Bracket did not find a mimimum")
 
 # metoda złotego podziału
-def GoldenRatio(f,a,b):
+def GoldenRatio(f,a,b,tol):
     k = ( sqrt( 5 ) - 1 ) / 2
     xL = b - k * ( b - a )
     xR = a + k * ( b - a )
     f1 = f(xL) 
     f2 = f(xR)
 
-    while ( ( b - a ) > EPSILON ):
+    while ( ( b - a ) > tol ):
         if f1 < f2:
             b = xR
             xR = xL
@@ -89,34 +103,56 @@ def GoldenRatio(f,a,b):
 
     return (a+b)/2, f
 
+def plot(set_function, x0, L, a, b, minPoint):
+    x = np.linspace( a, b, L)
+    y = np.linspace( a, b, L)
+    X, Y = np.meshgrid(x,y)
+    funkcja = set_function
+    funkcja = funkcja.replace("x1","X")
+    funkcja = funkcja.replace("x2","Y")
+    Z = eval(funkcja)
 
-#definicja funkcji
-def F(x):       
+    fig,ax=plt.subplots(1,1)
+    cp = ax.contourf(X, Y, Z)
+    fig.colorbar(cp) # Add a colorbar to a plot
+    ax.set_title('Filled Contours Plot')
+    ax.set_xlabel('x (cm)')
+    ax.set_ylabel('y (cm)')
 
-    #F = x[0]**2 + x[0]*x[1] + 2 * x[0] + x[1]**2
-    #F = (1.5 - x[0] + x[0]*x[1])**2 + (2.25 - x[0] + x[0]*x[1]**2)**2 + (2.625 - x[0] + x[0]*x[1]**3)**2
-    #F = (x[0] + 2*x[1] - 7)**2 + (2*x[0] + x[1] - 5)**2
-    #F = 0.26 * (x[0]**2 + x[1]**2) - 0.48 * x[0] * x[1]
-    F = 100 * sqrt(fabs(x[1]-0.01*x[0]**2)) + 0.01*fabs(x[0] + 10)
-    #F = (1 + (x[0] + x[1] + 1)**2 * (19 - 14 * x[0] + 3 * x[0]**2 - 14 * x[1] + 6 * x[0] * x[1] + 3 * x[1]**2)) *  (30 + (2 * x[0] - 3 * x[1])**2 * (18 - 32 * x[0] + 12 * x[0]**2 + 48 * x[1] - 36 * x[0] * x[1] + 27 * x[1]**2))
+    # plot(x0[0], x0[1], 'po')
+    # plot(minPoint[0], minPoint[1], 'ro')
 
-    return F 
+    plt.show()
+
 
 if __name__ == '__main__':
-    startingPoint_array = list()
-    
-    startingPointMatrix = input("Enter how many elements does the starting point has: ")
-    #dla funckji F(x,y) wpisać 2, dla funkcji F(x,y,z) wpisać 3 itp.
-    x0 = zeros(int(startingPointMatrix))                  
-    minimumPoint = zeros(int(startingPointMatrix))
+    set_x0 = str(input('Enter the starting point: '))
+    x0 = [float(x) for x in set_x0.split(',')]
 
-    print ('Enter coordinates of the starting point: ')
-    for i in range(int(startingPointMatrix)):
-        x0[i] = int(input("Insert grid coordinate : "))
-        #kolejno podawane koordynaty punktu x[0] = x x[1] = y --> (x,y)
+    L = int(input('Enter number of iterations: '))
 
-    minimumPoint = powellMethod(F, x0, h=0.1)
-    minimalizedFunction = F(minimumPoint[0])
-    print("Minimum -> ", minimumPoint[0])
+    estimation = input('Enter tolerance: ')
+    tol = eval(estimation.replace("^","**"))
+
+    ab_tab = str(input('Enter brackets for Golden Ratio search: '))
+    a = float(ab_tab.split(',')[0])
+    b = float(ab_tab.split(',')[1])
+
+    formula = str(input('Enter function: '))
+    set_formula = formula.replace("^","**")
+    set_function = parser.expr(set_formula).compile()
+
+
+    minimumPoint = powellMethod(set_function, x0, L, tol, a, b, h=0.1)
+    for i in range(1, len(minimumPoint[0])+1):
+        locals()['x%s' % i] = minimumPoint[0][i-1]
+    minimalizedFunction = eval(set_function)
+
+    minimumPoint[0]
+    print("Minimum -> ", minimumPoint)
     print("F(minimum) = :", minimalizedFunction)
-    
+
+    plot(set_formula, x0, L, a, b, minimumPoint[0])
+
+    del formula
+    del set_formula
