@@ -6,8 +6,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def powellMethodA(set_function,x, L,epsilon, h=0.1):
 
-def powellMethod(set_function,x, L,tol, a, b, h=0.1):
+    def f(lmbd):
+        x_lamb = x + lmbd*v
+        for i in range(1, len(x_lamb)+1):
+            locals()['x%s' % i] = x_lamb[i-1]   # funkcja F dla kierunku ksi
+        result = eval(set_function)
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = x[i-1]
+        return result
+        
+
+
+    n = len(x)                           # ilość zmiennych w funkcji
+    ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
+    for j in range(L):                  # max 30 cykli
+        xOld = x.copy()                  # przypisanie punktu startowego 
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = xOld[i-1]
+        fOld = eval(set_function)
+
+      # Dla i = 1,2,...,n następuje obliczanie lambda minimalizujące 
+      # oraz współrzedne nowego punktu x
+        for i in range(n):
+            v = ksi[i]
+            a,b = Interval4GoldenRatio(f,0.0,h)
+            lmbd,fMin = GoldenRatio(f,a,b, epsilon)
+            fOld = fMin
+            x = x + lmbd*v
+
+      # wyznaczanie składowych kierunku sprzężonego    
+        v = xOld - x
+      # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v 
+      # oraz współżedne nowego punktu startowego
+        a,b = Interval4GoldenRatio(f,0.0,h)
+        lmbd,fLast = GoldenRatio(f,a,b, epsilon)
+        x = x + lmbd*v
+    
+      # sprawdzanie czy jest spełnione kryterium dla minimum
+        if sqrt(dot(x-xOld,x-xOld)/n) < epsilon: return x,j+1
+
+      # modyfikacja kierunków poszukiwań
+        for i in range(n-1):
+            ksi[i] = ksi[i+1]
+        ksi[n-1] = v
+
+    print ("Powell did not converge")    
+
+def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
 
     def f(lmbd):
         x_lamb = x + lmbd*v
@@ -33,7 +80,7 @@ def powellMethod(set_function,x, L,tol, a, b, h=0.1):
         for i in range(n):
             v = ksi[i]
             # a,b = Interval4GoldenRatio(f,0.0,h)
-            lmbd,fMin = GoldenRatio(f,a,b, tol)
+            lmbd,fMin = GoldenRatio(f,a,b, epsilon)
             fOld = fMin
             x = x + lmbd*v
 
@@ -42,11 +89,11 @@ def powellMethod(set_function,x, L,tol, a, b, h=0.1):
       # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v 
       # oraz współżedne nowego punktu startowego
         # a,b = Interval4GoldenRatio(f,0.0,h)
-        lmbd,fLast = GoldenRatio(f,a,b, tol)
+        lmbd,fLast = GoldenRatio(f,a,b, epsilon)
         x = x + lmbd*v
     
       # sprawdzanie czy jest spełnione kryterium dla minimum
-        if sqrt(dot(x-xOld,x-xOld)/n) < tol: return x,j+1
+        if sqrt(dot(x-xOld,x-xOld)/n) < epsilon: return x,j+1
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -56,35 +103,35 @@ def powellMethod(set_function,x, L,tol, a, b, h=0.1):
     print ("Powell did not converge")    
 
 # określenie zakresów dla złotego podziału
-#def Interval4GoldenRatio(f,xL,h):
-#    c = 1.618033989 
-#    f1 = f(xL)
-#    xR = xL + h; f2 = f(xR)
-#  # określenie kierunku spadku
-#  # zmiana znaku przy h  jeśli konieczna
-#    if f2 > f1:
-#        h = -h
-#        xR = xL + h; f2 = f(xR)
-#      # sprawdzenie czy minimum znajduje się między xL - h  a xL + h
-#        if f2 > f1: return xR,xL - h 
-#  # przeszukanie pętli max 100 cykli
-#    for i in range (100):    
-#        h = c*h
-#        x3 = xR + h; f3 = f(x3)
-#        if f3 > f2: return xL,x3
-#        xL = xR; xR = x3
-#        f1 = f2; f2 = f3
-#    print("Bracket did not find a mimimum")
+def Interval4GoldenRatio(f,xL,h):
+    c = 1.618033989 
+    f1 = f(xL)
+    xR = xL + h; f2 = f(xR)
+  # określenie kierunku spadku
+  # zmiana znaku przy h  jeśli konieczna
+    if f2 > f1:
+        h = -h
+        xR = xL + h; f2 = f(xR)
+      # sprawdzenie czy minimum znajduje się między xL - h  a xL + h
+        if f2 > f1: return xR,xL - h 
+  # przeszukanie pętli max 100 cykli
+    for i in range (100):    
+        h = c*h
+        x3 = xR + h; f3 = f(x3)
+        if f3 > f2: return xL,x3
+        xL = xR; xR = x3
+        f1 = f2; f2 = f3
+    print("Bracket did not find a mimimum")
 
 # metoda złotego podziału
-def GoldenRatio(f,a,b,tol):
+def GoldenRatio(f,a,b,epsilon):
     k = ( sqrt( 5 ) - 1 ) / 2
     xL = b - k * ( b - a )
     xR = a + k * ( b - a )
     f1 = f(xL) 
     f2 = f(xR)
 
-    while ( ( b - a ) > tol ):
+    while ( ( b - a ) > epsilon ):
         if f1 < f2:
             b = xR
             xR = xL
@@ -132,18 +179,32 @@ if __name__ == '__main__':
     L = int(input('Enter number of iterations: '))
 
     estimation = input('Enter tolerance: ')
-    tol = eval(estimation.replace("^","**"))
+    epsilon = eval(estimation.replace("^","**"))
 
-    ab_tab = str(input('Enter brackets for Golden Ratio search: '))
-    a = float(ab_tab.split(',')[0])
-    b = float(ab_tab.split(',')[1])
+    print("How to you want to choose [a,b]?")
+    print("To use the Swan method, enter 1.")
+    print("to enter them yourself, enter 2.")
+    caseVariable = int(input("Answer: "))
 
-    formula = str(input('Enter function: '))
-    set_formula = formula.replace("^","**")
-    set_function = parser.expr(set_formula).compile()
+    if caseVariable == 1:
+        formula = str(input('Enter function: '))
+        set_formula = formula.replace("^","**")
+        set_function = parser.expr(set_formula).compile()
 
+        minimumPoint = powellMethodA(set_function, x0, L, epsilon, h=0.1)
+    elif caseVariable == 2:
+        ab_tab = str(input('Enter brackets for Golden Ratio search: '))
+        a = float(ab_tab.split(',')[0])
+        b = float(ab_tab.split(',')[1])
 
-    minimumPoint = powellMethod(set_function, x0, L, tol, a, b, h=0.1)
+        formula = str(input('Enter function: '))
+        set_formula = formula.replace("^","**")
+        set_function = parser.expr(set_formula).compile()
+
+        minimumPoint = powellMethodB(set_function, x0, L, epsilon, a, b, h=0.1)
+    else:
+        print("Invalid argument.")
+    
     for i in range(1, len(minimumPoint[0])+1):
         locals()['x%s' % i] = minimumPoint[0][i-1]
     minimalizedFunction = eval(set_function)
@@ -152,7 +213,7 @@ if __name__ == '__main__':
     print("Minimum -> ", minimumPoint)
     print("F(minimum) = :", minimalizedFunction)
 
-    plot(set_formula, x0, L, a, b, minimumPoint[0])
+    #plot(set_formula, x0, L, a, b, minimumPoint[0])
 
     del formula
     del set_formula
