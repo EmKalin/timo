@@ -16,9 +16,9 @@ def powellMethodA(set_function,x, L,epsilon, h=0.1):
         for i in range(1, len(x)+1):
             locals()['x%s' % i] = x[i-1]
         return result
-        
 
-
+    xIt = []
+    fIt = []
     n = len(x)                           # ilość zmiennych w funkcji
     ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
     for j in range(L):                  # max 30 cykli
@@ -31,21 +31,26 @@ def powellMethodA(set_function,x, L,epsilon, h=0.1):
       # oraz współrzedne nowego punktu x
         for i in range(n):
             v = ksi[i]
-            a,b = Interval4GoldenRatio(f,0.0,h)
-            lmbd,fMin = GoldenRatio(f,a,b, epsilon)
-            fOld = fMin
+            a,b = Interval4GoldenRatio(f,0.0,h,L)
+            lmbd = GoldenRatio(f,a,b, epsilon)
             x = x + lmbd*v
 
       # wyznaczanie składowych kierunku sprzężonego    
         v = xOld - x
       # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v 
       # oraz współżedne nowego punktu startowego
-        a,b = Interval4GoldenRatio(f,0.0,h)
-        lmbd,fLast = GoldenRatio(f,a,b, epsilon)
+        a,b = Interval4GoldenRatio(f,0.0,h,L)
+        lmbd = GoldenRatio(f,a,b, epsilon)
         x = x + lmbd*v
-    
-      # sprawdzanie czy jest spełnione kryterium dla minimum
-        if sqrt(dot(x-xOld,x-xOld)/n) < epsilon: return x,j+1
+        xMin = x.copy()                  # przypisanie punktu startowego 
+        xIt.append(xMin)
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = xMin[i-1]
+        fIt.append(eval(set_function))
+
+        kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
+        # sprawdzanie czy jest spełnione kryterium dla minimum
+        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1, xIt, fIt
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -64,12 +69,13 @@ def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
         for i in range(1, len(x)+1):
             locals()['x%s' % i] = x[i-1]
         return result
-        
-
+    
+    xIt = []
+    fIt = []
 
     n = len(x)                           # ilość zmiennych w funkcji
     ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
-    for j in range(L):                  # max 30 cykli
+    for j in range(L):                   # max iteracji
         xOld = x.copy()                  # przypisanie punktu startowego 
         for i in range(1, len(x)+1):
             locals()['x%s' % i] = xOld[i-1]
@@ -79,21 +85,24 @@ def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
       # oraz współrzedne nowego punktu x
         for i in range(n):
             v = ksi[i]
-            # a,b = Interval4GoldenRatio(f,0.0,h)
-            lmbd,fMin = GoldenRatio(f,a,b, epsilon)
-            fOld = fMin
+            lmbd = GoldenRatio(f,a,b, epsilon)
             x = x + lmbd*v
 
       # wyznaczanie składowych kierunku sprzężonego    
         v = xOld - x
       # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v 
-      # oraz współżedne nowego punktu startowego
-        # a,b = Interval4GoldenRatio(f,0.0,h)
-        lmbd,fLast = GoldenRatio(f,a,b, epsilon)
+      # oraz współrzedne nowego punktu startowego
+        lmbd = GoldenRatio(f,a,b, epsilon)
         x = x + lmbd*v
-    
-      # sprawdzanie czy jest spełnione kryterium dla minimum
-        if sqrt(dot(x-xOld,x-xOld)/n) < epsilon: return x,j+1
+        xMin = x.copy()                  # przypisanie punktu startowego 
+        xIt.append(xMin)
+        for i in range(1, len(x)+1):
+            locals()['x%s' % i] = xMin[i-1]
+        fIt.append(eval(set_function))
+
+        kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
+        # sprawdzanie czy jest spełnione kryterium dla minimum
+        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1, xIt, fIt
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -103,7 +112,7 @@ def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
     print ("Powell did not converge")    
 
 # określenie zakresów dla złotego podziału
-def Interval4GoldenRatio(f,xL,h):
+def Interval4GoldenRatio(f,xL,h,L):
     c = 1.618033989 
     f1 = f(xL)
     xR = xL + h; f2 = f(xR)
@@ -115,7 +124,7 @@ def Interval4GoldenRatio(f,xL,h):
       # sprawdzenie czy minimum znajduje się między xL - h  a xL + h
         if f2 > f1: return xR,xL - h 
   # przeszukanie pętli max 100 cykli
-    for i in range (100):    
+    for i in range (L):    
         h = c*h
         x3 = xR + h; f3 = f(x3)
         if f3 > f2: return xL,x3
@@ -148,7 +157,7 @@ def GoldenRatio(f,a,b,epsilon):
     if f1 < f2: f = f1
     else: f = f2
 
-    return (a+b)/2, f
+    return (a+b)/2
 
 def plot(set_function, x0, L, a, b, minPoint):
     x = np.linspace( a, b, L)
@@ -209,8 +218,11 @@ if __name__ == '__main__':
         locals()['x%s' % i] = minimumPoint[0][i-1]
     minimalizedFunction = eval(set_function)
 
-    minimumPoint[0]
-    print("Minimum -> ", minimumPoint)
+    print("Minimum -> ", minimumPoint[0])
+    print("Criteria ", minimumPoint[1])
+    print("Number of iterations needed: ", minimumPoint[2])
+    print("Successive iterations of x: ", minimumPoint[3])
+    print("Successive iterations of f(x): ", minimumPoint[4])
     print("F(minimum) = :", minimalizedFunction)
 
     #plot(set_formula, x0, L, a, b, minimumPoint[0])
