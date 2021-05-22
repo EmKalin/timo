@@ -16,9 +16,6 @@ def powellMethodA(set_function,x, L,epsilon, h=0.1):
         for i in range(1, len(x)+1):
             locals()['x%s' % i] = x[i-1]
         return result
-
-    xIt = []
-    fIt = []
     n = len(x)                           # ilość zmiennych w funkcji
     ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
     for j in range(L):                  # max 30 cykli
@@ -42,15 +39,14 @@ def powellMethodA(set_function,x, L,epsilon, h=0.1):
         a,b = Interval4GoldenRatio(f,0.0,h,L)
         lmbd = GoldenRatio(f,a,b, epsilon)
         x = x + lmbd*v
-        xMin = x.copy()                  # przypisanie punktu startowego 
-        xIt.append(xMin)
+        xIt = x.copy()                  # przypisanie punktu startowego 
         for i in range(1, len(x)+1):
-            locals()['x%s' % i] = xMin[i-1]
-        fIt.append(eval(set_function))
+            locals()['x%s' % i] = xIt[i-1]
+        fIt = eval(set_function)
 
         kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
         # sprawdzanie czy jest spełnione kryterium dla minimum
-        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1, xIt, fIt
+        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -69,9 +65,6 @@ def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
         for i in range(1, len(x)+1):
             locals()['x%s' % i] = x[i-1]
         return result
-    
-    xIt = []
-    fIt = []
 
     n = len(x)                           # ilość zmiennych w funkcji
     ksi = identity(n)                    # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
@@ -94,15 +87,14 @@ def powellMethodB(set_function,x, L,epsilon, a, b, h=0.1):
       # oraz współrzedne nowego punktu startowego
         lmbd = GoldenRatio(f,a,b, epsilon)
         x = x + lmbd*v
-        xMin = x.copy()                  # przypisanie punktu startowego 
-        xIt.append(xMin)
+        xIt = x.copy()                  # przypisanie punktu startowego 
         for i in range(1, len(x)+1):
-            locals()['x%s' % i] = xMin[i-1]
-        fIt.append(eval(set_function))
+            locals()['x%s' % i] = xIt[i-1]
+        fIt = eval(set_function)
 
         kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
         # sprawdzanie czy jest spełnione kryterium dla minimum
-        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1, xIt, fIt
+        if kryteriumStopu < epsilon: return x, kryteriumStopu, j + 1
 
       # modyfikacja kierunków poszukiwań
         for i in range(n-1):
@@ -219,10 +211,6 @@ if __name__ == '__main__':
     minimalizedFunction = eval(set_function)
 
     print("Minimum -> ", minimumPoint[0])
-    print("Criteria ", minimumPoint[1])
-    print("Number of iterations needed: ", minimumPoint[2])
-    print("Successive iterations of x: ", minimumPoint[3])
-    print("Successive iterations of f(x): ", minimumPoint[4])
     print("F(minimum) = :", minimalizedFunction)
 
     #plot(set_formula, x0, L, a, b, minimumPoint[0])
