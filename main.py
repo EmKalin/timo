@@ -1,59 +1,81 @@
-from casadi import *
+# This Python file uses the following encoding: utf-8
+import os
+from pathlib import Path
+import sys
 
-x1 = SX.sym('x1')
-x2 = SX.sym('x2')
-x3 = SX.sym('x3')
-x4 = SX.sym('x4')
-x5 = SX.sym('x5')
+from PySide6.QtWidgets import QApplication, QMainWindow, QErrorMessage, QMessageBox
+from PySide6.QtCore import QFile
+from PySide6.QtUiTools import QUiLoader
+from PySide6 import QtCore
+
+class main(QMainWindow):
+    def __init__(self):
+        super(main, self).__init__()
+        self.loaded = self.load_ui()
+        self.init_connections()
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
+
+    def init_connections(self):
+        self.loaded.swanButton.clicked.connect(self.getSettingforSwan)
+        self.loaded.solve_button.clicked.connect(self.getSettingWithoutSwan)
+        self.loaded.pushButton_2.clicked.connect(self.solution)
 
 
+    def show(self):
+        self.loaded.show()
 
-def GoldenRatioMethod(a, b, equalsss):
-    d = SX.sym('d')
-    func = Function('func', [d], [eval(equalsss)])
-    k = (sqrt(5) - 1) / 2
+    def load_ui(self):
+        loader = QUiLoader()
+        path = os.fspath(Path(__file__).resolve().parent / "form.ui")
+        ui_file = QFile(path)
+        ui_file.open(QFile.ReadOnly)
+        loaded = loader.load(ui_file, self)
+        ui_file.close()
+        return loaded
 
-    xL = b - k * (b - a)
-    xR = a + k * (b - a)
+    def _show_error(self, msg):
+        error_dialog = QErrorMessage(self)
+        error_dialog.setWindowTitle("Errors")
+        error_dialog.showMessage(msg)
 
-    EPSILON = 10**(-6)
+    @QtCore.Slot()
+    def solution(self):
+        powell = self.loaded.function.text()
+        self.loaded.solution.setText(powell)
 
-    while (b - a) > EPSILON:
-        if func(xL) < func(xR):
-            b = xR
-            xR = xL
-            xL = b - k * (b - a)
+    @QtCore.Slot()
+    def getSettingforSwan(self):
+        functionToPowell = self.loaded.function.text()
+        epsilon = self.loaded.accuracy.text()
+        starPoint = self.loaded.startPoint.text()
+        numbOfIteration = self.loaded.iteration.text()
+
+        if len(functionToPowell) == 0 or len(epsilon) == 0 or len(starPoint) == 0 or len(numbOfIteration) == 0:
+            self._show_error('Fild allll')
         else:
-            a = xL
-            xL = xR
-            xR = a + k * (b - a)
+            msgBox = QMessageBox()
+            msgBox.setText("Liczymy Swonem!")
+            msgBox.exec()
+
+    @QtCore.Slot()
+    def getSettingWithoutSwan(self):
+        functionToPowell = self.loaded.function.text()
+        epsilon = self.loaded.accuracy.text()
+        starPoint = self.loaded.startPoint.text()
+        numbOfIteration = self.loaded.iteration.text()
+        setA = self.loaded.sectionA.text()
+        setB = self.loaded.sectionB.text()
+
+        if len(functionToPowell) == 0 or len(epsilon) == 0 or len(starPoint) == 0 or len(numbOfIteration) == 0 or len(setA) == 0 or len(setB) == 0:
+            self.loaded.QErrorMessage.showMessage('Fill in all fields to calculate!')
+        else:
+            msgBox = QMessageBox()
+            msgBox.setText("Liczymy bez Swonna!")
+            msgBox.exec()
 
 
-    return (a+b)/2
-
-
-if __name__ == '__main__':
-
-    x = SX.sym('x')
-    a = int(input("Set a: "))
-    b = int(input("Set b: "))
-
-    expression = input("Set expression: ")
-
-    r = GoldenRatioMethod(a, b, expression)
-    print(r)
-
-    # n = int(input("Set number of variables: "))
-    #
-    # X = [0] * 5
-    #
-    # expression = input("Set expression: ")
-    # f = Function('f', [x1, x2, x3, x4, x5], [eval(expression)])
-    #
-    # for i in range(n):
-    #     tempx = input("Set variable")
-    #     X[i] = float(tempx)
-    #
-    # print(f(X[0], X[1], X[2], X[3], X[4]))
-
-
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    widget = main()
+    widget.show()
+    sys.exit(app.exec())
