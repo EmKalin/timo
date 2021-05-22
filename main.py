@@ -9,20 +9,51 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QErrorMessage, QMessage
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
 from PySide6 import QtCore
+from numpy import append
+
 from powell import *
 
-class main(QMainWindow):
+
+class mainWindow(QMainWindow):
     def __init__(self):
-        super(main, self).__init__()
+        super(mainWindow, self).__init__()
         self.loaded = self.load_ui()
+        self.powellInstance = PowellInstance(self)
         self.init_connections()
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
-
+        self.xPlot = []
+        self.yPlot = []
+        self.zPlot = []
 
     def init_connections(self):
         self.loaded.swanButton.clicked.connect(self.getSettingforSwan)
         self.loaded.solve_button.clicked.connect(self.getSettingWithoutSwan)
-        #self.loaded.pushButton_2.clicked.connect(self.solution)
+
+    def tempSlot(self, data):
+        #print("Iam here - data received: " + str(data["x"]))
+        x = data["x"]
+        print(len(x))
+        self.xPlot.append(x[0])
+        self.yPlot.append(x[1])
+        self.zPlot.append(data["fmin"])
+
+        row = [str(data["stop"]), str(data["fmin"]), str(data["x"])]
+        self.addTableRow(row)
+
+
+    def draw(self):
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        X, Y = np.meshgrid(np.array(self.xPlot), np.array(self.yPlot))
+        X = np.asarray(self.xPlot)
+        Y = np.asarray(self.yPlot)
+        Z = np.asarray(self.zPlot)
+
+        #surf = ax.plot_trisurf(X, Y, Z, linewidth=0, antialiased=False)
+
+        ax.plot_trisurf(X, Y, Z, color='green')
+        ax.set_title('wireframe geeks for geeks')
+        plt.show()
 
 
     def show(self):
@@ -41,7 +72,6 @@ class main(QMainWindow):
         error_dialog = QErrorMessage(self)
         error_dialog.setWindowTitle("Errors")
         error_dialog.showMessage(msg)
-
 
     def getSettins(self):
         set_x0 = self.loaded.startPoint.text()      #Pobranie punktu startowego
@@ -74,7 +104,7 @@ class main(QMainWindow):
     def getSettingforSwan(self):
 
         x0, numbOfIteration, epsilon, functionToPowell,formula = self.getSettins()
-        minimumPoint = powellMethodA(functionToPowell, x0, numbOfIteration, epsilon, h=0.1)
+        minimumPoint = self.powellInstance.powellMethodA(functionToPowell, x0, numbOfIteration, epsilon, h=0.1)
 
         for i in range(1, len(minimumPoint[0]) + 1):
             locals()['x%s' % i] = minimumPoint[0][i - 1]
@@ -97,9 +127,12 @@ class main(QMainWindow):
         print("KrytStop -> ", minimumPoint[1])
         print("F(minimum) = :", minimalizedFunction)
 
-        msgBox = QMessageBox()
-        msgBox.setText("Liczymy Swonem!")
-        msgBox.exec()
+        self.draw()
+
+
+        # msgBox = QMessageBox()
+        # msgBox.setText("Liczymy Swonem!")
+        # msgBox.exec()
 
     def addTableRow(self, row_data):
             row = self.loaded.tableWidget.rowCount()
@@ -119,6 +152,6 @@ class main(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    widget = main()
+    widget = mainWindow()
     widget.show()
     sys.exit(app.exec())
