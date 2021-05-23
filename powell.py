@@ -109,8 +109,18 @@ class PowellInstance(QObject):
             lmbd, fLast = self.GoldenRatio(f, a, b, epsilon)
             x = x + lmbd * v
 
+            xIt = x.copy()  # przypisanie punktu startowego
+            for i in range(1, len(x) + 1):
+                locals()['x%s' % i] = xIt[i - 1]
+            fIt = eval(set_function)
+
+            kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
+            dataExport = {"x": x, "stop": kryteriumStopu, "fmin": fIt}
+            self.speak.emit(dataExport)
+
             # sprawdzanie czy jest spełnione kryterium dla minimum
-            if sqrt(dot(x - xOld, x - xOld) / n) < epsilon: return x, j + 1
+            if kryteriumStopu < epsilon:
+                return x, kryteriumStopu, j + 1
 
             # modyfikacja kierunków poszukiwań
             for i in range(n - 1):

@@ -25,6 +25,7 @@ class mainWindow(QMainWindow):
         self.yPlot = []
         self.zPlot = []
 
+
     def init_connections(self):
         self.loaded.swanButton.clicked.connect(self.getSettingforSwan)
         self.loaded.solve_button.clicked.connect(self.getSettingWithoutSwan)
@@ -94,12 +95,6 @@ class mainWindow(QMainWindow):
             return x0,numbOfIteration,epsilon,functionToPowell,formula
 
 
-
-    @QtCore.Slot()
-    def solution(self):
-        solv = self.loaded.function.text()
-        self.loaded.solution.setText(solv)
-
     @QtCore.Slot()
     def getSettingforSwan(self):
 
@@ -145,10 +140,39 @@ class mainWindow(QMainWindow):
 
     @QtCore.Slot()
     def getSettingWithoutSwan(self):
-        for i in range (20):
-            row_2 = ['002', 'Lily', 32]
-            self.addTableRow(row_2)
-            self.loaded.tableWidget.scrollToBottom()
+        # for i in range (20):
+        #     row_2 = ['002', 'Lily', 32]
+        #     self.addTableRow(row_2)
+        #     self.loaded.tableWidget.scrollToBottom()
+
+        a = float(self.loaded.sectionA.text())
+        b = float(self.loaded.sectionB.text())
+
+        x0, numbOfIteration, epsilon, functionToPowell, formula = self.getSettins()
+        minimumPoint = self.powellInstance.powellMethodB(functionToPowell, x0, numbOfIteration, epsilon, a, b, h=0.1)
+
+        for i in range(1, len(minimumPoint[0]) + 1):
+            locals()['x%s' % i] = minimumPoint[0][i - 1]
+
+        minimalizedFunction = eval(functionToPowell)
+
+        # minimumPoint[0]
+
+        finalMinimalizedFunction = str(minimalizedFunction)
+        self.loaded.f_min.setText(finalMinimalizedFunction)
+
+        finalMinimalPoint = str(minimumPoint[0])
+        self.loaded.x_min.setText(finalMinimalPoint)
+
+        krytStop = str(minimumPoint[1])
+        self.loaded.epsilon.setText(krytStop)
+
+        print("Minimum -> ", minimumPoint[0])
+        print("KrytStop -> ", minimumPoint[1])
+        print("F(minimum) = :", minimalizedFunction)
+
+        self.draw()
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
