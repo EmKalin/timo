@@ -157,7 +157,7 @@ class mainWindow(QMainWindow):
     @QtCore.Slot()
     def getSettingWithoutSwan(self):
 
-        sectionAB = self.getSettins()
+        sectionAB = self.getSectionToGRM()
         a=float(sectionAB[0])
         b = float(sectionAB[1])
         x0, numbOfIteration, epsilon, functionToPowell, formula = self.getSettins()
