@@ -10,11 +10,13 @@ from PySide6.QtCore import Signal
 
 class PowellInstance(QObject):
     speak = Signal(dict)
+    err = Signal(str)
 
     def __init__(self, parent):
         self.parent = parent
         super(PowellInstance, self).__init__()
         self.speak.connect(self.parent.tempSlot)
+        self.err.connect(self.parent.tempSlot)
 
     def powellMethodA(self, set_function, x, L, epsilon, h=0.1):
         def f(lmbd):
@@ -71,7 +73,7 @@ class PowellInstance(QObject):
                 ksi[i] = ksi[i + 1]
             ksi[n - 1] = v
 
-        print("Powell did not converge")
+        self.err.emit("Powell did not converge")
 
 
     def powellMethodB(self, set_function, x, L, epsilon, a, b, h=0.1):
@@ -127,11 +129,11 @@ class PowellInstance(QObject):
                 ksi[i] = ksi[i + 1]
             ksi[n - 1] = v
 
-        print("Powell did not converge")
+        self.err.emit("Powell did not converge")
 
-    @staticmethod
+
     # określenie zakresów dla złotego podziału
-    def Interval4GoldenRatio(f, xL, h):
+    def Interval4GoldenRatio(self,f, xL, h):
         c = 1.618033989
         f1 = f(xL)
         xR = xL + h;
@@ -154,7 +156,7 @@ class PowellInstance(QObject):
             xR = x3
             f1 = f2;
             f2 = f3
-        print("Bracket did not find a mimimum")
+        self.err.emit("Bracket did not find a mimimum")
 
     @staticmethod
     # metoda złotego podziału
@@ -186,27 +188,27 @@ class PowellInstance(QObject):
 
         return (a + b) / 2, f
 
-    @staticmethod
-    def plot(set_function, x0, L, a, b, minPoint):
-        x = np.linspace(a, b, L)
-        y = np.linspace(a, b, L)
-        X, Y = np.meshgrid(x, y)
-        funkcja = set_function
-        funkcja = funkcja.replace("x1", "X")
-        funkcja = funkcja.replace("x2", "Y")
-        Z = eval(funkcja)
-
-        fig, ax = plt.subplots(1, 1)
-        cp = ax.contourf(X, Y, Z)
-        fig.colorbar(cp)  # Add a colorbar to a plot
-        ax.set_title('Filled Contours Plot')
-        ax.set_xlabel('x (cm)')
-        ax.set_ylabel('y (cm)')
-
-        # plot(x0[0], x0[1], 'po')
-        # plot(minPoint[0], minPoint[1], 'ro')
-
-        plt.show()
+    # @staticmethod
+    # def plot(set_function, x0, L, a, b, minPoint):
+    #     x = np.linspace(a, b, L)
+    #     y = np.linspace(a, b, L)
+    #     X, Y = np.meshgrid(x, y)
+    #     funkcja = set_function
+    #     funkcja = funkcja.replace("x1", "X")
+    #     funkcja = funkcja.replace("x2", "Y")
+    #     Z = eval(funkcja)
+    #
+    #     fig, ax = plt.subplots(1, 1)
+    #     cp = ax.contourf(X, Y, Z)
+    #     fig.colorbar(cp)  # Add a colorbar to a plot
+    #     ax.set_title('Filled Contours Plot')
+    #     ax.set_xlabel('x (cm)')
+    #     ax.set_ylabel('y (cm)')
+    #
+    #     # plot(x0[0], x0[1], 'po')
+    #     # plot(minPoint[0], minPoint[1], 'ro')
+    #
+    #     plt.show()
 
 
 # if __name__ == '__main__':

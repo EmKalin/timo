@@ -30,13 +30,16 @@ class mainWindow(QMainWindow):
         self.loaded.swanButton.clicked.connect(self.getSettingforSwan)
         self.loaded.solve_button.clicked.connect(self.getSettingWithoutSwan)
 
+    def errorSlot(self, mgs):
+        self._show_error(mgs)
+
     def tempSlot(self, data):
         #print("Iam here - data received: " + str(data["x"]))
         x = data["x"]
-        print(len(x))
-        self.xPlot.append(x[0])
-        self.yPlot.append(x[1])
-        self.zPlot.append(data["fmin"])
+        if len(x)<3:
+            self.xPlot.append(x[0])
+            self.yPlot.append(x[1])
+            self.zPlot.append(data["fmin"])
 
         row = [str(data["stop"]), str(data["fmin"]), str(data["x"])]
         self.addTableRow(row)
@@ -90,9 +93,11 @@ class mainWindow(QMainWindow):
         functionToPowell = parser.expr(set_formula).compile()
 
         if len(formula) == 0 or len(estimation) == 0 or len(set_x0) == 0 or len(L) == 0:
-            self._show_error('Fild allll')
+            self._show_error('The required fields have not been completed')
         else:
             return x0,numbOfIteration,epsilon,functionToPowell,formula
+
+
 
 
     @QtCore.Slot()
@@ -109,6 +114,7 @@ class mainWindow(QMainWindow):
         #minimumPoint[0]
 
 
+
         finalMinimalizedFunction = str(minimalizedFunction)
         self.loaded.f_min.setText(finalMinimalizedFunction)
 
@@ -122,7 +128,8 @@ class mainWindow(QMainWindow):
         print("KrytStop -> ", minimumPoint[1])
         print("F(minimum) = :", minimalizedFunction)
 
-        self.draw()
+        if len(minimumPoint[0]) < 3:
+            self.draw()
 
 
         # msgBox = QMessageBox()
@@ -138,16 +145,21 @@ class mainWindow(QMainWindow):
                 self.loaded.tableWidget.setItem(row, col, cell)
                 col += 1
 
+    def getSectionToGRM(self):
+        a = self.loaded.sectionA.text()
+        b = self.loaded.sectionB.text()
+
+        if len(a) == 0 or len(b) == 0:
+            self._show_error('The required fields have not been completed')
+        else:
+            return a, b
+
     @QtCore.Slot()
     def getSettingWithoutSwan(self):
-        # for i in range (20):
-        #     row_2 = ['002', 'Lily', 32]
-        #     self.addTableRow(row_2)
-        #     self.loaded.tableWidget.scrollToBottom()
 
-        a = float(self.loaded.sectionA.text())
-        b = float(self.loaded.sectionB.text())
-
+        sectionAB = self.getSettins()
+        a=float(sectionAB[0])
+        b = float(sectionAB[1])
         x0, numbOfIteration, epsilon, functionToPowell, formula = self.getSettins()
         minimumPoint = self.powellInstance.powellMethodB(functionToPowell, x0, numbOfIteration, epsilon, a, b, h=0.1)
 
