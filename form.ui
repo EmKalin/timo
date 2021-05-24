@@ -198,7 +198,7 @@
            </palette>
           </property>
           <property name="text">
-           <string>100*(x2-x1**2)**2+(1-x1)**2</string>
+           <string>100*(x2-x1^2)^2+(1-x1)^2</string>
           </property>
          </widget>
         </item>
@@ -373,7 +373,7 @@
            </palette>
           </property>
           <property name="text">
-           <string>-10,10</string>
+           <string>-1.2,1</string>
           </property>
          </widget>
         </item>
@@ -717,7 +717,7 @@
            </palette>
           </property>
           <property name="text">
-           <string>10**(-3)</string>
+           <string>10^(-3)</string>
           </property>
          </widget>
         </item>
