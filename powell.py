@@ -49,7 +49,7 @@ class PowellInstance(QObject):
             # wyznaczanie składowych kierunku sprzężonego
             v = xOld - x
             # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v
-            # oraz współżedne nowego punktu startowego
+            # oraz współrzedne nowego punktu startowego
             # a,b = Interval4GoldenRatio(f,0.0,h)
             lmbd, fLast = self.GoldenRatio(f, a, b, epsilon)
             x = x + lmbd * v
