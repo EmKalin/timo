@@ -1,7 +1,7 @@
 from PySide6.QtCore import Signal, QObject
 from numpy import identity, array, dot, zeros, argmax
-import math
-from casadi import *
+from math import *
+# from casadi import *
 import parser
 import numpy as np
 import matplotlib.pyplot as plt
@@ -19,7 +19,8 @@ class PowellInstance(QObject):
         self.err.connect(self.parent.tempSlot)
 
 
-    def powellMethodB(self, set_function, x, L, epsilon, a, b, h=0.1):
+    def powellMethodB(self, set_function, x, L, epsilon, a, b):
+
         def f(lmbd):
             x_lamb = x + lmbd * v
             for i in range(1, len(x_lamb) + 1):
@@ -49,7 +50,7 @@ class PowellInstance(QObject):
             # wyznaczanie składowych kierunku sprzężonego
             v = xOld - x
             # wyznaczenie lambda minimalizujące wzdłuż nowego kierunku v
-            # oraz współrzedne nowego punktu startowego
+            # oraz współżedne nowego punktu startowego
             # a,b = Interval4GoldenRatio(f,0.0,h)
             lmbd, fLast = self.GoldenRatio(f, a, b, epsilon)
             x = x + lmbd * v
@@ -59,7 +60,10 @@ class PowellInstance(QObject):
                 locals()['x%s' % i] = xIt[i - 1]
             fIt = eval(set_function)
 
+
+
             kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
+
             dataExport = {"x": x, "stop": kryteriumStopu, "fmin": fIt}
             self.speak.emit(dataExport)
 

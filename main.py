@@ -8,9 +8,10 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QErrorMessage, QMessage
     QTableWidgetItem
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
+from math import *
 from PySide6 import QtCore
 from numpy import append
-
+from casadi import *
 from powell import *
 
 
@@ -49,7 +50,7 @@ class mainWindow(QMainWindow):
     def tempSlot(self, data):
         #print("Iam here - data received: " + str(data["x"]))
         x = data["x"]
-        if len(x)<3:
+        if len(x) < 3:
             self.xPlot.append(x[0])
             self.yPlot.append(x[1])
             self.zPlot.append(data["fmin"])
@@ -81,9 +82,14 @@ class mainWindow(QMainWindow):
 
         # ax.plot_trisurf(X, Y, Z, color='green')
         # ax.set_title('wireframe geeks for geeks')
-        plt.scatter(X, Y, c=Z, s = 20, cmap='viridis')
-        plt.ylim(-0.25,1.25)
-        plt.colorbar()
+        plt.scatter(X, Y, c=Z, s = 20, cmap='plasma')
+
+        #plt.ylim(-0.25,1.25)
+        plt.colorbar(label='Wartość funkcji')
+        plt.title('Punkty w kierunku minimalizacji')
+        plt.xlabel('x1')
+        plt.ylabel('x2')
+
         #plt.show()
 
     def drawlinePoint(self):
@@ -99,33 +105,40 @@ class mainWindow(QMainWindow):
 
 
         ax.plot3D(X, Y, Z, 'red')
+        ax.set_title('Punty w kierunku minimalizacji')
+        ax.set_xlabel('x1')
+        ax.set_ylabel('x2')
+        ax.set_zlabel('Wartość funckji')
 
         #plt.show()
 
 
-    def draw3D(self,func,a,b):
+    def draw3D(self,func):
 
         set_formula = func.replace("x1", "x")
         formula = set_formula.replace("x2", "y")
 
-        def f(x, y, funct):
+        def fuu(x, y, funct):
             return eval(funct)
 
         # x and y axis
-        x = np.linspace(a, b, 100)
-        y = np.linspace(a, b, 100)
+        x = np.linspace(-7, 7, 100)
+        y = np.linspace(-7, 7, 100)
 
         X, Y = np.meshgrid(x, y)
-        Z = f(X, Y, formula)
+        Z = fuu(X, Y, formula)
 
         fig = plt.figure()
         ax = plt.axes(projection='3d')
         ax.plot_surface(X, Y, Z, cmap='plasma', edgecolor='none')  # cmap ='viridis'
 
-        ax.set_title('wireframe geeks for geeks')
+        ax.set_title('Badana funkcja: ' + func)
+        ax.set_xlabel('x1')
+        ax.set_ylabel('x2')
+        ax.set_zlabel('Wartość funckji')
         #plt.show()
 
-    def draw2D(self,funct, secA, secB):
+    def draw2D(self,funct):
 
         set_formula = funct.replace("x1", "x")
         formula = set_formula.replace("x2", "y")
@@ -134,8 +147,8 @@ class mainWindow(QMainWindow):
             return eval(funct)
 
         # x and y axis
-        x = np.linspace(secA, secB, 100)
-        y = np.linspace(secA, secB, 100)
+        x = np.linspace(-7, 7, 100)
+        y = np.linspace(-7, 7, 100)
 
         X, Y = np.meshgrid(x, y)
         Z = f(X, Y, formula)
@@ -143,7 +156,11 @@ class mainWindow(QMainWindow):
         fig = plt.figure()
 
         plt.scatter(X, Y, c=Z, cmap='plasma')
-        plt.colorbar()
+
+        plt.colorbar(label='Wartość funkcji')
+        plt.title('Badana funkcja: ' + funct)
+        plt.xlabel('x1')
+        plt.ylabel('x2')
 
 
 # FUNCTION TO ADD ROW IN TABLE
@@ -213,7 +230,7 @@ class mainWindow(QMainWindow):
         a = float(sectionAB[0])
         b = float(sectionAB[1])
         x0, numbOfIteration, epsilon, functionToPowell, formula = self.getSettins()
-        minimumPoint = self.powellInstance.powellMethodB(functionToPowell, x0, numbOfIteration, epsilon, a, b, h=0.1)
+        minimumPoint = self.powellInstance.powellMethodB(functionToPowell, x0, numbOfIteration, epsilon, a, b)
 
         for i in range(1, len(minimumPoint[0]) + 1):
             locals()['x%s' % i] = minimumPoint[0][i - 1]
@@ -236,10 +253,13 @@ class mainWindow(QMainWindow):
         print("F(minimum) = :", minimalizedFunction)
 
         if len(minimumPoint[0]) < 3:
+
+            self.draw3D(formula)
+
+            self.draw2D(formula)
+
             self.drawPoint()
-            self.draw3D(formula,a,b)
             self.drawlinePoint()
-            self.draw2D(formula,a,b)
 
         else:
             self.loaded.diagramButton.setEnabled(False)
@@ -265,6 +285,7 @@ class mainWindow(QMainWindow):
         self.loaded.x_min.clear()
         self.loaded.epsilon.clear()
 
+        self.loaded.diagramButton.setEnabled(True)
         plt.close('all')
 
     def diagramshow(self):
