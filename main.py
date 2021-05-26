@@ -10,7 +10,7 @@ from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
 from math import *
 from PySide6 import QtCore
-from numpy import append
+from numpy import *
 from casadi import *
 from powell import *
 
@@ -118,6 +118,13 @@ class mainWindow(QMainWindow):
         set_formula = func.replace("x1", "x")
         formula = set_formula.replace("x2", "y")
 
+        formula = formula.replace('cos', 'np.cos')
+        formula = formula.replace('sin', 'np.sin')
+        formula = formula.replace('exp', 'np.exp')
+        formula = formula.replace('pi', 'np.pi')
+        formula = formula.replace('sqrt', 'np.sqrt')
+        formula = formula.replace('log', 'np.log')
+
         def fuu(x, y, funct):
             return eval(funct)
 
@@ -142,6 +149,16 @@ class mainWindow(QMainWindow):
 
         set_formula = funct.replace("x1", "x")
         formula = set_formula.replace("x2", "y")
+
+        formula = formula.replace('cos', 'np.cos')
+        formula = formula.replace('sin', 'np.sin')
+        formula = formula.replace('exp', 'np.exp')
+        formula = formula.replace('pi', 'np.pi')
+        formula = formula.replace('sqrt', 'np.sqrt')
+        formula = formula.replace('log', 'np.log')
+
+
+
         # function for z axea
         def f(x, y, funct):
             return eval(funct)

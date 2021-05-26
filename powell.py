@@ -32,11 +32,11 @@ class PowellInstance(QObject):
 
         n = len(x)  # ilość zmiennych w funkcji
         ksi = identity(n)  # baza wejsciowa utworzona z wzajemnie ortogonalnych vektorów
-        for j in range(L):  # max 30 cykli
+        for j in range(L):
             xOld = x.copy()  # przypisanie punktu startowego
             for i in range(1, len(x) + 1):
                 locals()['x%s' % i] = xOld[i - 1]
-            fOld = eval(set_function)
+            fOld = eval(set_function) #Wartoścc w punkcie wejściowym
 
             # Dla i = 1,2,...,n następuje obliczanie lambda minimalizujące
             # oraz współrzedne nowego punktu x
@@ -62,14 +62,17 @@ class PowellInstance(QObject):
 
 
 
-            kryteriumStopu = sqrt(dot(x - xOld, x - xOld) / n)
+            kryteriumStopu = sqrt(dot(x - xOld, x - xOld))
 
             dataExport = {"x": x, "stop": kryteriumStopu, "fmin": fIt}
             self.speak.emit(dataExport)
 
             # sprawdzanie czy jest spełnione kryterium dla minimum
-            if kryteriumStopu < epsilon:
+            if kryteriumStopu < epsilon and abs(fIt-fOld) < epsilon:
                 return x, kryteriumStopu, j + 1
+
+            # elif abs(fIt-fOld) < epsilon:
+            #     return x, abs(fIt-fOld), j + 1
 
             # modyfikacja kierunków poszukiwań
             for i in range(n - 1):
