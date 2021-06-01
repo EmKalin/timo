@@ -225,6 +225,7 @@ class mainWindow(QMainWindow):
         fig, ax = plt.subplots(1, 1)
         cp = ax.contourf(X, Y, Z, norm=LogNorm(), cmap='rainbow')
 
+        plt.plot(XT, YT, color="black", linewidth=0.5)
         plt.scatter(XT, YT, marker='o', c='b', s=5, zorder=10)
 
         plt.scatter(xmin, ymin, marker='x', c='r', s=100)
